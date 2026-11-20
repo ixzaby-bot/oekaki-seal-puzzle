@@ -2,16 +2,18 @@
 :root{font-family:system-ui,-apple-system,sans-serif;color:#283448;background:#fff9ed}*{box-sizing:border-box}body{margin:0}header{padding:13px 14px 7px;text-align:center}h1{font-size:22px;margin:0;color:#ec667a}header p{font-size:12px;margin:5px 0;color:#697386}.controls{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;padding:5px 8px}button,.upload{background:#fff;border:2px solid #f1b6bd;border-radius:15px;padding:9px 13px;font-weight:700;font-size:14px;color:#55445b;cursor:pointer}.primary{background:#f67e91;color:white;border-color:#f67e91}.upload input{display:none}select{border:2px solid #f1b6bd;border-radius:14px;background:#fff;padding:8px;font-size:14px}#status{text-align:center;font-size:13px;margin:5px 0 0;min-height:19px}main{max-width:620px;margin:auto;padding:6px 9px 20px}canvas{display:block;width:100%;border-radius:17px;background:#fff;touch-action:none;box-shadow:0 3px 16px #8a64752b}footer{text-align:center;color:#697386;font-size:12px;padding:8px}#message{font-weight:bold;color:#de6177}
 /* Reserve a separate lane so the scroll control never covers game controls. */
 body{padding-right:calc(56px + env(safe-area-inset-right,0px))}
-#page-scroll{position:fixed;z-index:10;right:env(safe-area-inset-right,0px);top:12px;width:48px;height:calc(100vh - 24px);height:calc(100svh - 24px);touch-action:none;user-select:none;-webkit-user-select:none;border-radius:24px;background:#f5e6de;box-shadow:inset 0 0 0 1px #dfc3b5}
+#page-scroll{position:fixed;z-index:10;right:env(safe-area-inset-right,0px);top:12px;width:48px;height:calc(100vh - 24px);height:calc(100svh - 24px);touch-action:none;user-select:none;-webkit-user-select:none}
 #page-scroll[hidden]{display:none}
-#page-scroll::before{content:'';position:absolute;top:8px;bottom:8px;left:21px;width:6px;border-radius:3px;background:#dfc3b5}
-#scroll-thumb{position:absolute;top:0;left:0;width:48px;min-height:48px;border:5px solid #f5e6de;border-radius:24px;background:#ec667a;display:flex;align-items:center;justify-content:center;color:white;font-size:22px;cursor:grab}
+#page-scroll::before{content:'';position:absolute;top:0;bottom:0;left:19px;width:10px;border-radius:5px;background:#dfc3b5;pointer-events:none}
+#scroll-thumb{position:absolute;top:0;left:0;width:48px;height:48px;cursor:grab}
+#scroll-thumb::before{content:'';position:absolute;inset:0 19px;border-radius:5px;background:#ec667a;pointer-events:none}
 #page-scroll:focus-visible{outline:3px solid #55445b;outline-offset:-3px}
-#page-scroll.scrolling #scroll-thumb{background:#c84660;cursor:grabbing;transition:none}
+#page-scroll.scrolling #scroll-thumb{cursor:grabbing;transition:none}
+#page-scroll.scrolling #scroll-thumb::before{background:#c84660}
 html.scroll-direct,html.scroll-direct body{scroll-behavior:auto!important}
 #scroll-debug{margin:12px;padding:8px;border:1px solid #697386;font-size:12px;text-align:left}
 #scroll-debug textarea{width:100%;height:160px;font-size:12px}
-</style></head><body><header><h1>🎨 おえかきシールパズル</h1><p>じぶんの絵を ばらばらシールにして あそぼう！</p></header><div class="controls"><label class="upload">📷 えをえらぶ<input id="file" type="file" accept="image/*"></label><select id="level" aria-label="難易度"><option value="2">かんたん 4まい</option><option value="3" selected>ふつう 9まい</option><option value="4">むずかしい 16まい</option></select><button class="primary" id="new">🔀 もういちど</button><button id="hint">👀 ヒント ON</button></div><div id="status">ゲームを じゅんびしています…</div><main><canvas id="game" aria-label="シールパズルのゲーム画面"></canvas></main><footer><span id="message">ぴったりのばしょに おくと カチッとはまるよ！</span><p>画像は端末内で処理します。外部へのアップロードはしません。</p></footer><div id="page-scroll" role="scrollbar" aria-label="ページを上下にうごかす" aria-controls="game" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0" hidden><span id="scroll-thumb" aria-hidden="true">↕</span></div><script>
+</style></head><body><header><h1>🎨 おえかきシールパズル</h1><p>じぶんの絵を ばらばらシールにして あそぼう！</p></header><div class="controls"><label class="upload">📷 えをえらぶ<input id="file" type="file" accept="image/*"></label><select id="level" aria-label="難易度"><option value="2">かんたん 4まい</option><option value="3" selected>ふつう 9まい</option><option value="4">むずかしい 16まい</option></select><button class="primary" id="new">🔀 もういちど</button><button id="hint">👀 ヒント ON</button></div><div id="status">ゲームを じゅんびしています…</div><main><canvas id="game" aria-label="シールパズルのゲーム画面"></canvas></main><footer><span id="message">ぴったりのばしょに おくと カチッとはまるよ！</span><p>画像は端末内で処理します。外部へのアップロードはしません。</p></footer><div id="page-scroll" role="scrollbar" aria-label="ページを上下にうごかす" aria-controls="game" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0" hidden><span id="scroll-thumb" aria-hidden="true"></span></div><script>
 (()=>{'use strict';
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');const file=document.getElementById('file'),level=document.getElementById('level'),status=document.getElementById('status'),msg=document.getElementById('message'),hintBtn=document.getElementById('hint');
 let img=null,N=3,pieces=[],board={},scale=1,drag=null,hint=true,completed=false,confetti=[],seed=0;
@@ -33,18 +35,18 @@ function logScroll(type,e){
 }
 if(debugScroll){
  const panel=document.createElement('details');panel.id='scroll-debug';
- panel.innerHTML='<summary>スクロール診断 v0.3.2</summary><p>再現後に「ログを表示」を押し、欄内のテキストをコピーしてください。直近1500件を端末内だけに記録します。</p><button type="button">ログを表示</button><button type="button">記録をクリア</button><textarea readonly aria-label="スクロール診断ログ"></textarea>';
+ panel.innerHTML='<summary>スクロール診断 v0.3.3</summary><p>再現後に「ログを表示」を押し、欄内のテキストをコピーしてください。直近1500件を端末内だけに記録します。</p><button type="button">ログを表示</button><button type="button">記録をクリア</button><textarea readonly aria-label="スクロール診断ログ"></textarea>';
  document.body.appendChild(panel);
  const buttons=panel.querySelectorAll('button'),output=panel.querySelector('textarea');
- buttons[0].addEventListener('click',()=>{output.value=JSON.stringify({version:'0.3.2',exportedAt:new Date().toISOString(),userAgent:navigator.userAgent,records:scrollLog.slice()},null,2);output.focus();output.select()});
+ buttons[0].addEventListener('click',()=>{output.value=JSON.stringify({version:'0.3.3',exportedAt:new Date().toISOString(),userAgent:navigator.userAgent,records:scrollLog.slice()},null,2);output.focus();output.select()});
  buttons[1].addEventListener('click',()=>{scrollLog.length=0;output.value=''});
 }
 function paintThumb(y,travel){computedThumbY=y;scrollThumb.style.transform='translateY('+y+'px)';scrollTrack.setAttribute('aria-valuenow',Math.round(travel?y/travel*100:0))}
 function scrollMetrics(){
  const root=document.scrollingElement||document.documentElement,viewHeight=document.documentElement.clientHeight||window.innerHeight;
  const rect=scrollTrack.getBoundingClientRect(),height=rect.height,total=root.scrollHeight;
- const max=Math.max(0,total-viewHeight),thumb=Math.min(height,Math.max(48,height*viewHeight/Math.max(1,total)));
- return {height,max,thumb,travel:height-thumb,top:rect.top};
+ const max=Math.max(0,total-viewHeight),thumb=48;
+ return {height,max,thumb,travel:Math.max(0,height-thumb),top:rect.top};
 }
 function updateScroll(){
  if(scrollDrag){renderDrag();return}
@@ -57,22 +59,23 @@ function updateScroll(){
 }
 function scheduleScroll(e){
  if(e&&e.type)logScroll((e.currentTarget===window.visualViewport?'visualViewport.':'')+e.type,e);
- if(!scrollFrame)scrollFrame=requestAnimationFrame(()=>{scrollFrame=0;updateScroll();logScroll('frame');if(scrollDrag)scheduleScroll()});
+ if(!scrollFrame)scrollFrame=requestAnimationFrame(()=>{scrollFrame=0;updateScroll();logScroll('frame')});
 }
-function renderDrag(){
+function renderDrag(forceScroll=false){
  const d=scrollDrag;if(!d)return;
- // Only compensate observed movement of the fixed track, not viewport offsets.
- // Frozen dimensions and pointer delta remain the sole source of the thumb position.
+ // One rail-local coordinate drives both the thumb and the page.
+ // Read the origin only on input/viewport/scroll events, never in a polling loop.
  const top=scrollTrack.getBoundingClientRect().top;
- const y=Math.max(0,Math.min(d.travel,d.startThumbY+(lastPointerY-d.startClientY)+d.trackTop-top));
- paintThumb(y,d.travel);
+ const y=Math.max(0,Math.min(d.travel,lastPointerY-top-d.grabOffset));
+ if(y!==d.y||forceScroll){
+  if(y!==d.y)paintThumb(y,d.travel);
+  d.y=y;d.requestedScroll=y/d.travel*d.max;
+  window.scrollTo({left:0,top:d.requestedScroll,behavior:'auto'});
+ }
 }
 function moveScroll(e){
  const d=scrollDrag;if(!d||d.travel<=0||d.max<=1)return;
- lastPointerY=e.clientY;renderDrag();
- const deltaY=Math.max(0,Math.min(d.travel,d.startThumbY+(lastPointerY-d.startClientY)));
- d.requestedScroll=deltaY/d.travel*d.max;
- window.scrollTo({left:0,top:d.requestedScroll,behavior:'auto'});logScroll(e.type,e);scheduleScroll();
+ lastPointerY=e.clientY;renderDrag(true);logScroll(e.type,e);
 }
 scrollTrack.addEventListener('pointerdown',e=>{
  if(drag||scrollDrag||!e.isPrimary||e.button!==0)return;
